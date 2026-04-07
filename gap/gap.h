@@ -23,12 +23,20 @@
     #define GBYEL "\x1b[33m"
     #define GBPUR "\x1b[35m"
 
+    #define GBBG "\x1b[44m"
+
     #define GBLGRAY "\x1b[90m"
     #define GBRESET "\x1b[0m"
     extern char* GBACCENT;
     extern size_t GBACCENT_SIZE;
 #endif
+    #define GBCOLOR_SIZE 5
 
+typedef enum{
+    ALNUM,
+    SPACE,
+    OTHER,
+} CharType;
 
 typedef struct{
     char* buffer;
@@ -38,6 +46,9 @@ typedef struct{
     size_t gapl; //index gapleft
     size_t gapr; //gapright
 } GapBuffer;
+
+
+extern int selection_start;
 
 void initGb(GapBuffer* gb, size_t gap_size);
 
@@ -61,5 +72,12 @@ void moveUp(GapBuffer* gb);
 void moveDown(GapBuffer* gb);
 
 void moveStart(GapBuffer* gb);
+
+void moveLeftWord(GapBuffer* gb);
+void moveRightWord(GapBuffer* gb);
+
+void moveUpAbsolute(GapBuffer* gb);
+void moveDownAbsolute(GapBuffer* gb);
+
 
 #endif

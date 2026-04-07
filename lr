@@ -1,3 +1,3 @@
+cls
 gcc main.c util/util.c gap/gap.c gap/render.c rw/readwrite.c -o main.exe -Wall -Wextra
-.\main C:\Users\henri\Documentos\projetos\p\projetosC\editor\_\a
-rm main
+start cmd /k "cd C:\Users\henri\Documentos\projetos\p\projetosC\editor && .\main C:\Users\henri\Documentos\projetos\p\projetosC\editor\_\a"

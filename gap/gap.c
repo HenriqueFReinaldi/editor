@@ -1,5 +1,7 @@
 #include "gap.h"
 
+int selection_start = -1;
+
 //init
 void initGb(GapBuffer* gb, size_t gap_size){
     if (gap_size < 1) gap_size = 1;
@@ -118,6 +120,8 @@ void moveUp(GapBuffer* gb){
         moveLeft(gb);
         col++;
     }
+
+
     if (gb->gapl > 0)moveLeft(gb);
 
     moveToCol(gb, col);
@@ -141,4 +145,54 @@ void moveDown(GapBuffer* gb){
 
 void moveStart(GapBuffer* gb){
     while(gb->gapl != 0) moveLeft(gb);
+}
+
+
+CharType get_char_type(char c){
+    if (isspace(c)) return SPACE;
+    if (isalnum(c) || c == '_' || c == '\'' || c == '"') return ALNUM;
+    return OTHER;
+}
+
+
+void moveUpAbsolute(GapBuffer* gb){
+    while((gb->gapl > 0) && (gb->buffer[gb->gapl-1] != '\n')) moveLeft(gb);
+    if (gb->gapl > 0)moveLeft(gb);
+        
+}
+
+void moveDownAbsolute(GapBuffer* gb){
+    while((gb->gapr < gb->buffer_size-1) && (gb->buffer[gb->gapr+1] != '\n')) moveRight(gb);
+    if (gb->gapr < gb->buffer_size-1)moveRight(gb);
+
+    while((gb->gapr < gb->buffer_size-1) && (gb->buffer[gb->gapr+1] != '\n')) moveRight(gb);
+}
+
+void moveLeftWord(GapBuffer* gb){
+    if (gb->gapl == 0) return;
+
+    CharType past_char_type, current_char_type;
+    current_char_type = get_char_type(gb->buffer[gb->gapl-1]);
+    past_char_type = current_char_type;
+
+
+    while(past_char_type == current_char_type && gb->gapl > 0){
+        moveLeft(gb);
+        past_char_type = current_char_type;
+        current_char_type = get_char_type(gb->buffer[gb->gapl-1]);
+    } 
+}
+
+void moveRightWord(GapBuffer* gb){
+    if (gb->gapr >= gb->buffer_size-1) return;
+    CharType past_char_type, current_char_type;
+
+    current_char_type = get_char_type(gb->buffer[gb->gapr+1]);
+    past_char_type = current_char_type;
+
+    while(past_char_type == current_char_type && gb->gapr < gb->buffer_size-1){
+        moveRight(gb);
+        past_char_type = current_char_type;
+        current_char_type = get_char_type(gb->buffer[gb->gapr+1]);
+    } 
 }

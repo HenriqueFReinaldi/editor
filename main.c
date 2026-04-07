@@ -8,7 +8,7 @@
 
 //info
     //geral
-    #define VER "29.03.2026.1"
+    #define VER "06.04.2026.1"
     char* editor_file_path;
 
     //cmdbar
@@ -20,7 +20,6 @@
     extern int relative_mode;
 
 //gbs
-
 #define EDITORBUFSIZE 100
 #define BARBUFSIZE 20
 GapBuffer editor;
@@ -32,6 +31,11 @@ GapBuffer* gb;
 int show_gap_buffer = 0;
 int down_offset = 0;
 int command_bar_mode = 0;
+
+
+//data
+int shift_pressed = 0;
+
 
 
 int loadFile(GapBuffer* gb, char* path){
@@ -52,7 +56,6 @@ int loadFile(GapBuffer* gb, char* path){
 
 //
 void handleKBInput(char c){
-
     switch (c){
         case 13:
             insertChar(gb, '\n');
@@ -61,6 +64,7 @@ void handleKBInput(char c){
             insertChar(gb, -61);
             insertChar(gb, -89);
             break;
+
         case 9:
             insertString(gb, "    ", 4);
             break;
@@ -74,11 +78,33 @@ void handleKBInput(char c){
     render(*gb, show_gap_buffer, down_offset);
 }
 
+
+int selecting = 0;
 void handleSPInput(char c){
+    if (shift_pressed && !selecting){
+        selecting = 1;
+        selection_start = gb->gapl;
+    }
+    
+
     if (c == 75) moveLeft(gb);
     else if (c == 77) moveRight(gb);
     else if (c == 72) moveUp(gb);
     else if (c == 80) moveDown(gb);
+
+    else if (c == 115) moveLeftWord(gb);
+    else if (c == 116) moveRightWord(gb); 
+
+    else if (c == -115) moveUpAbsolute(gb);
+    else if (c == -111) moveDownAbsolute(gb);
+
+    render(*gb, show_gap_buffer, down_offset);
+}
+
+
+
+void handleZRInput(char c){
+    insertChar(gb, c);
 
     render(*gb, show_gap_buffer, down_offset);
 }
@@ -221,8 +247,6 @@ BarAcReturn handleBarActions(char* command){
 
 
 
-
-
 int main(int argc, char** argv){
     SetConsoleOutputCP(CP_UTF8);
     printf("\e[1;1H\e[2J");
@@ -230,23 +254,17 @@ int main(int argc, char** argv){
 
     initGb(&editor, EDITORBUFSIZE);
     initGb(&bar, BARBUFSIZE);
-
+    gb = &editor;
 
     //
     relative_mode = 0;
 
     cursor = malloc(2*sizeof(char));
     strncpy(cursor, "<", 2);
-
-    
-
     GBACCENT = malloc(6*sizeof(char));
-    strncpy(GBACCENT, GBBLU, 6);
+    strncpy(GBACCENT, GBGRN, 6);
     GBACCENT_SIZE = 5;
-
     //
-
-    gb = &editor;
 
     if (argc == 2){
         char* temp = argv[1];
@@ -259,14 +277,18 @@ int main(int argc, char** argv){
         loadFile(gb, editor_file_path);
     }
 
-    //moveStart(gb);
-    
-
+    moveStart(gb);
     render(*gb, show_gap_buffer, down_offset);
 
     while (1) {
         if (_kbhit()){
+            if (GetAsyncKeyState(VK_SHIFT) < 0) shift_pressed = 1;
+            else shift_pressed = 0;
             char c = _getch();
+            if (c != -32 || !shift_pressed) {
+                selecting = 0;
+                selection_start = -1;
+            }
 
             if (command_bar_mode && c == 13){
                 char* bar_text = getText(*gb);
@@ -300,9 +322,10 @@ int main(int argc, char** argv){
                 render(*gb, show_gap_buffer, down_offset);
             }   
 
-            else if (c == -32){
-                handleSPInput(_getch());
-            }
+            else if (c == -32) handleSPInput(_getch());
+                
+            else if (c == 0) handleZRInput(_getch());
+                
             else handleKBInput(c);
 
             if (command_bar_mode){
@@ -314,6 +337,7 @@ int main(int argc, char** argv){
                 printf("%s", last_cmd_bar_msg);
             }
         }
+        
         
     }
     return 0;
